@@ -7,11 +7,14 @@ package calculate;
 
 import javafx.scene.paint.Color;
 
+import java.io.IOException;
+import java.io.Serializable;
+
 /**
  *
  * @author Peter Boots
  */
-public class Edge {
+public class Edge implements Serializable {
     public double X1, Y1, X2, Y2;
     public Color color;
     
@@ -21,5 +24,28 @@ public class Edge {
         this.X2 = X2;
         this.Y2 = Y2;
         this.color = color;
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+        out.writeDouble(X1);
+        out.writeDouble(X2);
+        out.writeDouble(Y1);
+        out.writeDouble(Y2);
+        out.writeDouble(color.getRed());
+        out.writeDouble(color.getBlue());
+        out.writeDouble(color.getGreen());
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        X1 = in.readDouble();
+        X2 = in.readDouble();
+        Y1 = in.readDouble();
+        Y2 = in.readDouble();
+
+        double red = in.readDouble();
+        double blue = in.readDouble();
+        double green = in.readDouble();
+
+        color = Color.color(red, green, blue);
     }
 }

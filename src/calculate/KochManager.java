@@ -4,8 +4,8 @@ import javafx.application.Platform;
 import jsf31kochfractalfx.JSF31KochFractalFX;
 import timeutil.TimeStamp;
 
+import java.io.*;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 public class KochManager {
     private JSF31KochFractalFX application;
@@ -26,7 +26,33 @@ public class KochManager {
         EdgeProccesingThread = new Thread(() -> {
             edges.clear();
 
+            File file = new File(""+nxt);
 
+            FileInputStream fileStream = null;
+            ObjectInputStream objectStream = null;
+            try {
+                fileStream = new FileInputStream(file);
+                objectStream = new ObjectInputStream(fileStream);
+
+                Edge edge = null;
+
+                while (true) {
+                    edge = (Edge) objectStream.readObject();
+                    edges.add(edge);
+                }
+
+            }
+            catch (EOFException e) {}
+            catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (fileStream != null)
+                        fileStream.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
 
             Platform.runLater(() -> {
                 this.stamp.setEnd("reading complete");
@@ -45,8 +71,10 @@ public class KochManager {
         stamp.setBegin("Start draw");
 
         application.clearKochPanel();
-        for(Edge edge : edges)
+        for (int i = 0; i < edges.size(); i++) {
+            Edge edge = edges.get(i);
             application.drawEdge(edge);
+        }
 
         stamp.setEnd("drawing complete");
         application.setTextDraw(stamp.toString());
