@@ -21,18 +21,21 @@ public class KochManager {
         if (EdgeProccesingThread != null && EdgeProccesingThread.isAlive())
             EdgeProccesingThread.interrupt();
 
-        stamp = new TimeStamp();
-        stamp.setBegin("Start read");
+
         EdgeProccesingThread = new Thread(() -> {
             edges.clear();
 
-            File file = new File(""+nxt);
+            stamp = new TimeStamp();
+            stamp.setBegin("Start read");
+            File file = new File("edges/binary/"+nxt);
 
             FileInputStream fileStream = null;
+            BufferedInputStream buffer;
             ObjectInputStream objectStream = null;
             try {
                 fileStream = new FileInputStream(file);
-                objectStream = new ObjectInputStream(fileStream);
+                buffer = new BufferedInputStream(fileStream);
+                objectStream = new ObjectInputStream(buffer);
 
                 Edge edge = null;
 
