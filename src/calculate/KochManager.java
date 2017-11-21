@@ -1,11 +1,13 @@
 package calculate;
 
 import javafx.application.Platform;
+import javafx.scene.paint.Color;
 import jsf31kochfractalfx.JSF31KochFractalFX;
 import timeutil.TimeStamp;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class KochManager {
     private JSF31KochFractalFX application;
@@ -27,26 +29,37 @@ public class KochManager {
 
             stamp = new TimeStamp();
             stamp.setBegin("Start read");
-            File file = new File("edges/binary/"+nxt);
+            File file = new File("edges/Text/"+nxt);
 
             FileInputStream fileStream = null;
             BufferedInputStream buffer;
             ObjectInputStream objectStream = null;
             try {
+
                 fileStream = new FileInputStream(file);
                 buffer = new BufferedInputStream(fileStream);
-                objectStream = new ObjectInputStream(buffer);
 
-                Edge edge = null;
+                Scanner scanner = new Scanner(buffer);
 
-                while (true) {
-                    edge = (Edge) objectStream.readObject();
-                    edges.add(edge);
+                String line;
+                while (scanner.hasNext()) {
+                    line = scanner.next();
+
+                    String[] split = line.split(",");
+
+                    double X1 = Double.parseDouble(split[0]);
+                    double Y1 = Double.parseDouble(split[1]);
+                    double X2 = Double.parseDouble(split[2]);
+                    double Y2 = Double.parseDouble(split[3]);
+                    double red = Double.parseDouble(split[4]);
+                    double blue = Double.parseDouble(split[5]);
+                    double green = Double.parseDouble(split[6]);
+
+                    edges.add(new Edge(X1, Y1, X2, Y2, Color.color(red, green, blue)));
                 }
 
             }
-            catch (EOFException e) {}
-            catch (IOException | ClassNotFoundException e) {
+            catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 try {
