@@ -104,7 +104,7 @@ public class JSF31KochFractalFX extends Application {
         grid.add(labelLevel, 0, 6);
 
         ComboBox<Integer> levelBox = new ComboBox<>();
-        for (int i = 1; i < 10; i++)
+        for (int i = 1; i < 13; i++)
             levelBox.getItems().add(i);
         levelBox.valueProperty().addListener(this::levelBoxChanged);
         grid.add(levelBox, 1, 6);
