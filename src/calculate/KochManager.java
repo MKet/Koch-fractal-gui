@@ -16,7 +16,8 @@ import java.util.Scanner;
 
 public class KochManager {
 
-    private static final int EDGE_SIZE = 7*8;
+    private static final int EDGE_SIZE = 7*Double.BYTES;
+
 
     private JSF31KochFractalFX application;
     private ArrayList<Edge> edges = new ArrayList<>();
@@ -49,7 +50,7 @@ public class KochManager {
 
                 KochFractal koch = new KochFractal(nxt);
 
-                MappedByteBuffer map = fc.map(FileChannel.MapMode.READ_ONLY, 0, EDGE_SIZE*koch.getNrOfEdges()+4);
+                MappedByteBuffer map = fc.map(FileChannel.MapMode.READ_ONLY, 0, EDGE_SIZE*koch.getNrOfEdges()+Integer.BYTES);
 
                 try {
                     for (int i = 0; i < koch.getNrOfEdges(); i++) {
