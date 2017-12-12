@@ -41,14 +41,14 @@ public class KochManager {
 
             try (
                     Socket socket = new Socket("localhost", 1337);
-                    DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
+                    ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
                     ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream())
                 ) {
 
                 stamp = new TimeStamp();
                 stamp.setBegin("Start read");
 
-                outStream.writeInt(nxt);
+                outStream.writeObject(new Request(nxt, ResponseType.OneTime));
 
                 IAnswer answer = (IAnswer) inStream.readObject();
 
