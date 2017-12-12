@@ -6,12 +6,15 @@ import jsf31kochfractalfx.JSF31KochFractalFX;
 import timeutil.TimeStamp;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.DoubleBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class KochManager {
@@ -20,7 +23,7 @@ public class KochManager {
 
 
     private JSF31KochFractalFX application;
-    private ArrayList<Edge> edges = new ArrayList<>();
+    private List<Edge> edges = new ArrayList<>();
     private TimeStamp stamp;
     private Thread EdgeProccesingThread;
 
@@ -36,50 +39,20 @@ public class KochManager {
         EdgeProccesingThread = new Thread(() -> {
             edges.clear();
 
-            try {
-                File file = new File("../"+nxt);
+            try (
+                    Socket socket = new Socket("localhost", 1337);
+                    DataOutputStream outStream = new DataOutputStream(socket.getOutputStream());
+                    ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream())
+                ) {
 
                 stamp = new TimeStamp();
                 stamp.setBegin("Start read");
 
-                System.out.println("start read");
-                RandomAccessFile randomAccessFile = new RandomAccessFile(file , "rw");
+                outStream.writeInt(nxt);
 
-                System.out.println("random access file made");
-                FileChannel fc = randomAccessFile.getChannel();
+                IAnswer answer = (IAnswer) inStream.readObject();
 
-                KochFractal koch = new KochFractal(nxt);
-
-                MappedByteBuffer map = fc.map(FileChannel.MapMode.READ_ONLY, 0, EDGE_SIZE*koch.getNrOfEdges()+Integer.BYTES);
-
-                try {
-                    for (int i = 0; i < koch.getNrOfEdges(); i++) {
-                        while (map.getInt() < i+1) {
-                            map.position(0);
-                            Thread.sleep(10);
-                        }
-                        map.position(i*EDGE_SIZE+4);
-                        FileLock lock = fc.lock(map.position(), EDGE_SIZE, false);
-                        double X1 = map.getDouble();
-                        double Y1 = map.getDouble();
-                        double X2 = map.getDouble();
-                        double Y2 = map.getDouble();
-                        double red = map.getDouble();
-                        double blue = map.getDouble();
-                        double green = map.getDouble();
-                        lock.release();
-
-                        Edge edge = new Edge(X1, Y1, X2, Y2, new Color(red, green, blue, 1));
-
-                        edges.add(edge);
-                    }
-                } finally {
-                    try {
-                        randomAccessFile.close();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                }
+                edges = answer.getEdges();
 
                 Platform.runLater(() -> {
                     System.out.println("reading complete");
@@ -89,9 +62,9 @@ public class KochManager {
 
                     drawEdges();
                 });
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) { }
+            }
         });
         EdgeProccesingThread.start();
 
@@ -102,8 +75,7 @@ public class KochManager {
         stamp.setBegin("Start draw");
 
         application.clearKochPanel();
-        for (int i = 0; i < edges.size(); i++) {
-            Edge edge = edges.get(i);
+        for (Edge edge : edges) {
             application.drawEdge(edge);
         }
 
