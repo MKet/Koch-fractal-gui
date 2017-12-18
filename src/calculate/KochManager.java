@@ -1,8 +1,10 @@
 package calculate;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
 import jsf31kochfractalfx.JSF31KochFractalFX;
+import server.Protocol;
 import timeutil.TimeStamp;
 
 import java.io.*;
@@ -15,21 +17,35 @@ import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class KochManager {
 
     private static final int EDGE_SIZE = 7*Double.BYTES;
 
-
     private JSF31KochFractalFX application;
     private List<Edge> edges = new ArrayList<>();
     private TimeStamp stamp;
     private Thread EdgeProccesingThread;
+    private ConcurrentLinkedQueue<Edge> queue;
+    private AnimationTimer timer;
 
     public KochManager(JSF31KochFractalFX application) {
         this.application = application;
-
+        queue = new ConcurrentLinkedQueue<>();
+        timer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                Edge edge;
+                while ((edge = queue.poll()) != null )
+                    application.drawEdge(edge);
+            }
+        };
+        timer.start();
     }
 
     public void changeLevel(int nxt) {
@@ -45,14 +61,19 @@ public class KochManager {
                     ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream())
                 ) {
 
+                application.clearKochPanel();
                 stamp = new TimeStamp();
                 stamp.setBegin("Start read");
 
                 outStream.writeObject(new Request(nxt, ResponseType.OneTime));
 
-                IAnswer answer = (IAnswer) inStream.readObject();
+                Protocol protocol = new Protocol(outStream, inStream, nxt);
 
-                edges = answer.getEdges();
+                /*IAnswer answer = protocol.readComplete();
+
+                edges = answer.getEdges();*/
+
+                protocol.readEdges((e) -> queue.add(e));
 
                 Platform.runLater(() -> {
                     System.out.println("reading complete");
@@ -62,7 +83,7 @@ public class KochManager {
 
                     drawEdges();
                 });
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         });
